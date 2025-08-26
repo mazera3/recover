@@ -31,17 +31,15 @@
         <form action="{{ route('importar.livros') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div>
-                <label class="block text-blue-700 font-medium mb-2">CSV de Livros (contem: nome, id_autor,
-                    id_editora)</label>
+                <label class="block text-blue-700 font-medium mb-2">CSV de Livros (contem: nome, id_autor, id_editora)</label>
                 <input type="file" name="livros" required class="w-md px-3 py-2 border rounded-lg">
             </div>
-            <div>
-                <label class="block text-blue-700 font-medium mb-2">CSV de Autores (contem: nome do autor, id)</label>
+            <div class="mt-6">
+                <label class="block text-blue-700 font-medium mb-2">CSV de Autores (contem: id_autor, nome)</label>
                 <input type="file" name="autores" required class="w-md px-3 py-2 border rounded-lg">
             </div>
-            <div>
-                <label class="block text-blue-700 font-medium mb-2">CSV de Editoras (contem: nome da editora,
-                    id)</label>
+            <div class="mt-6">
+                <label class="block text-blue-700 font-medium mb-2">CSV de Editoras (contem: id_editora, nome)</label>
                 <input type="file" name="editoras" required class="w-md px-3 py-2 border rounded-lg">
             </div>
             <button type="submit"

@@ -20,11 +20,11 @@ class LivroController extends Controller
             'editoras' => 'required|file|mimes:csv,txt',
         ]);
 
-        // Função para ler CSV
-        $lerCsv = function ($arquivo, $chave = null) {
+        function lerCsv($arquivo, $chave = null)
+        {
             $dados = [];
             if (($handle = fopen($arquivo, "r")) !== false) {
-                $cabecalho = fgetcsv($handle, 1000, ",");
+                $cabecalho = fgetcsv($handle, 1000, ","); // primeira linha = cabeçalho
                 while (($linha = fgetcsv($handle, 1000, ",")) !== false) {
                     $registro = array_combine($cabecalho, $linha);
                     if ($chave) {
@@ -36,26 +36,29 @@ class LivroController extends Controller
                 fclose($handle);
             }
             return $dados;
-        };
+        }
 
-        // Ler arquivos enviados
-        $autores = $lerCsv($request->file('autores')->getRealPath(), 'id');
-        $editoras = $lerCsv($request->file('editoras')->getRealPath(), 'id');
-        $livros = $lerCsv($request->file('livros')->getRealPath());
+        $autores  = lerCsv($request->file('autores')->getRealPath(), 'id_autor');
+        $editoras = lerCsv($request->file('editoras')->getRealPath(), 'id_editora');
+        $livros   = lerCsv($request->file('livros')->getRealPath());
+
+        // Definir caminho dentro de storage/app
+        $nomeArquivo = 'livros_completo.csv';
+        $caminho     = storage_path("app/$nomeArquivo");
 
         // Criar CSV final
-        $nomeArquivo = 'livros_completo.csv';
-        $arquivoSaida = fopen(storage_path("app/$nomeArquivo"), 'w');
+        $arquivoSaida = fopen($caminho, 'w');
         fputcsv($arquivoSaida, ['Livro', 'Autor', 'Editora']);
 
+
         foreach ($livros as $livro) {
-            $autor = $autores[$livro['id_autor']]['nome'] ?? 'Sem autor';
+            $autor   = $autores[$livro['id_autor']]['nome']   ?? 'Sem autor';
             $editora = $editoras[$livro['id_editora']]['nome'] ?? 'Sem editora';
             fputcsv($arquivoSaida, [$livro['nome'], $autor, $editora]);
         }
 
         fclose($arquivoSaida);
-
-        return response()->download(storage_path("app/$nomeArquivo"));
+        // Forçar download do arquivo gerado
+        return response()->download($caminho)->deleteFileAfterSend(true);
     }
 }
