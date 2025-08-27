@@ -20,27 +20,34 @@ class LivroController extends Controller
             'editoras' => 'required|file|mimes:csv,txt',
         ]);
 
-        function lerCsv($arquivo, $chave = null)
-        {
+        $lerCsv = function ($arquivo, $chave = null) {
             $dados = [];
             if (($handle = fopen($arquivo, "r")) !== false) {
-                $cabecalho = fgetcsv($handle, 1000, ","); // primeira linha = cabeçalho
+                $cabecalho = fgetcsv($handle, 1000, ",");
                 while (($linha = fgetcsv($handle, 1000, ",")) !== false) {
-                    $registro = array_combine($cabecalho, $linha);
-                    if ($chave) {
-                        $dados[$registro[$chave]] = $registro;
-                    } else {
-                        $dados[] = $registro;
+                    // pula linhas vazias
+                    if (count($linha) === 1 && trim($linha[0]) === '') {
+                        continue;
+                    }
+                    // só combina se tiver o mesmo número de colunas
+                    if (count($cabecalho) === count($linha)) {
+                        $registro = array_combine($cabecalho, $linha);
+                        if ($chave) {
+                            $dados[$registro[$chave]] = $registro;
+                        } else {
+                            $dados[] = $registro;
+                        }
                     }
                 }
                 fclose($handle);
             }
             return $dados;
-        }
+        };
 
-        $autores  = lerCsv($request->file('autores')->getRealPath(), 'id_autor');
-        $editoras = lerCsv($request->file('editoras')->getRealPath(), 'id_editora');
-        $livros   = lerCsv($request->file('livros')->getRealPath());
+
+        $autores  = $lerCsv($request->file('autores')->getRealPath(), 'id_autor');
+        $editoras = $lerCsv($request->file('editoras')->getRealPath(), 'id_editora');
+        $livros   = $lerCsv($request->file('livros')->getRealPath());
 
         // Definir caminho dentro de storage/app
         $nomeArquivo = 'livros_completo.csv';
@@ -48,14 +55,21 @@ class LivroController extends Controller
 
         // Criar CSV final
         $arquivoSaida = fopen($caminho, 'w');
-        fputcsv($arquivoSaida, ['Livro', 'Autor', 'Editora']);
+        fputcsv($arquivoSaida, ['cdd', 'Livro', 'Autor', 'Editora']);
 
 
         foreach ($livros as $livro) {
             $autor   = $autores[$livro['id_autor']]['nome']   ?? 'Sem autor';
             $editora = $editoras[$livro['id_editora']]['nome'] ?? 'Sem editora';
-            fputcsv($arquivoSaida, [$livro['nome'], $autor, $editora]);
+
+            fputcsv($arquivoSaida, [
+                $livro['cdd'],
+                $livro['nome'],
+                $autor,
+                $editora
+            ]);
         }
+
 
         fclose($arquivoSaida);
         // Forçar download do arquivo gerado
